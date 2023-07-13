@@ -1,2 +1,43 @@
 # TEST FILE
-test
+
+ESTIMATING THE OPTION VALUE
+
+def estimate_option_values(eur_10y_name, option_data_name):
+    # Access the DataFrames using their names
+    eur_10y = globals()[eur_10y_name]
+    option_data = globals()[option_data_name]
+    
+    # Calculate rate change
+    eur_10y['rate_change'] = eur_10y['rate'].diff()
+    
+    # Initialize the value column in EUR_10y with NaN values
+    eur_10y['value'] = np.nan
+    
+    # Iterate over each row in EUR_10y DataFrame
+    for i in range(1, len(eur_10y)):
+        # Get the previous value from the previous row
+        previous_value = eur_10y.at[i-1, 'value']
+        
+        # Get the rate change and corresponding option data for the current row
+        rate_change = eur_10y.at[i, 'rate_change']
+        option_row = option_data.loc[option_data['date'] == eur_10y.at[i, 'date']]
+        
+        # Check if option data exists for the current date
+        if not option_row.empty:
+            delta = option_row['delta'].values[0]
+            gamma = option_row['gamma'].values[0]
+            
+            # Calculate the new value based on the formula
+            new_value = previous_value * rate_change * delta + 0.5 * gamma * rate_change**2
+            
+            # Update the value column in EUR_10y DataFrame with the new value
+            eur_10y.at[i, 'value'] = new_value
+    
+    # Return the updated EUR_10y DataFrame
+    return eur_10y
+
+
+eur_10y_name = 'EUR_10y'
+option_data_name = 'option_data'
+result = estimate_option_values(eur_10y_name, option_data_name)
+print(result)
