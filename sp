@@ -101,7 +101,7 @@ app.layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     html.Label("1st Strike"),
-                    dcc.Input(id="1st_strike_id", type="number", value=1, debounce=True, className="form-control")
+                    dcc.Input(id="1st_strike_id", type="number", value=3, step=0.05, debounce=True, className="form-control")
                 ], width=3),
                 dbc.Col([
                     html.Label("1st Strike"),
@@ -121,7 +121,7 @@ app.layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     html.Label("Width"),
-                    dcc.Input(id="width_id", type="number", value=1, debounce=True, className="form-control")
+                    dcc.Input(id="width_id", type="number", value=1, step=0.05, debounce=True, className="form-control")
                 ], width=3),
                 dbc.Col([
                     html.Label("Width"),
@@ -160,7 +160,7 @@ app.layout = dbc.Container([
                     dbc.Table(
                         id="legs_details_table_id",
                         children=[
-                            html.Thead(html.Tr([html.Th("Legs"), html.Th("ATMVol"), html.Th("PV")])),
+                            html.Thead(html.Tr([html.Th("Leg"), html.Th("ATMVol"), html.Th("PV")])),
                             html.Tbody([
                                 html.Tr([html.Td("Leg 1"), html.Td("ATMVol 1", id='ATMVol_1_id'), html.Td("PV 1", id='PV_1_id')]),
                                 html.Tr([html.Td("Leg 2"), html.Td("ATMVol 2", id='ATMVol_2_id'), html.Td("PV 2", id='PV_2_id')]),
