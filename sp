@@ -6,6 +6,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
 import pandas as pd
 import numpy as np
+import random
 import plotly.express as px
 from sklearn.datasets import load_iris
 
@@ -14,17 +15,11 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
 # Define the layout
 app.layout = dbc.Container([
-    # Empty row below the title
-    dbc.Row(html.Br(), style={"margin-bottom": "50px"}),
-
     # Title at the top
-    dbc.Row(dbc.Col(html.H1("Dashboard Title", className="text-center"))),
-    dbc.Row(html.Br(), style={"margin-bottom": "50px"}),
+    dbc.Row(dbc.Col(html.H1("Structure Pricer", className="text-center mb-4"))),
 
-    # Main content row with a margin column on the left
+    # Main content row
     dbc.Row([
-        # Margin column on the left
-        dbc.Col(width=2),
         # Main content column
         dbc.Col([
             # First row of content
@@ -99,49 +94,47 @@ app.layout = dbc.Container([
                         value='fp'
                     )
                 ])
-            ]),
-            
-            html.Br(),
+            ], className="mb-4"),
             
             # Second row of content
             dbc.Row([
                 dbc.Col([
                     html.Label("1st Strike"),
-                    dcc.Input(id="1st-strike", type="text", value='1')
-                ], width=6),
+                    dcc.Input(id="1st-strike", type="number", value=1, debounce=True, className="form-control")
+                ], width=3),
                 dbc.Col([
-                    html.Label("Slider 1"),
+                    html.Label("1st Strike"),
                     dcc.Slider(
                         id='slider1',
                         min=0,
                         max=10,
                         step=0.1,
-                        value=5
+                        value=5,
+                        marks={i: str(i) if i % 1 == 0 else '' for i in range(11)},
+                        className="w-100"
                     )
-                ], width=6)
-            ]),
-            
-            html.Br(),
+                ], width=9)
+            ], className="mb-4"),
             
             # Third row of content
             dbc.Row([
                 dbc.Col([
                     html.Label("Width"),
-                    dcc.Input(id="width", type="text", value='1')
-                ], width=6),
+                    dcc.Input(id="width", type="number", value=1, debounce=True, className="form-control")
+                ], width=3),
                 dbc.Col([
-                    html.Label("Slider 2"),
+                    html.Label("Width"),
                     dcc.Slider(
                         id='slider2',
                         min=0,
-                        max=10,
-                        step=0.1,
-                        value=5
+                        max=2,
+                        step=0.05,
+                        value=0.5,
+                        marks={i: str(i) if i % 0.1 == 0 else '' for i in range(11)},
+                        className="w-100"
                     )
-                ], width=6)
-            ]),
-            
-            html.Br(),
+                ], width=9)
+            ], className="mb-4"),
             
             # Fourth row of content
             dbc.Row([
@@ -150,29 +143,18 @@ app.layout = dbc.Container([
                     dbc.Table(
                         id="risks",
                         children=[
-                            html.Thead(html.Tr([html.Th("Header 1"), html.Th("Header 2")])),
+                            html.Thead(html.Tr([html.Th("RiskMetric"), html.Th("Value")])),
                             html.Tbody([
-                                html.Tr([html.Td("Data 1"), html.Td("Data 2")]),
-                                html.Tr([html.Td("Data 3"), html.Td("Data 4")]),
-                                html.Tr([html.Td("Data 5"), html.Td("Data 6")]),
-                                html.Tr([html.Td("Data 7"), html.Td("Data 8")]),
-                                html.Tr([html.Td("Data 9"), html.Td("Data 10")])
+                                html.Tr([html.Td("Delta"), html.Td("Data 2")]),
+                                html.Tr([html.Td("Gamma"), html.Td("Data 4")]),
+                                html.Tr([html.Td("Vega"), html.Td("Data 6")]),
+                                html.Tr([html.Td("Theta"), html.Td("Data 8")]),
+                                html.Tr([html.Td("Rho"), html.Td("Data 10")])
                             ])
                         ],
                         style={'width': '100%'}
-                    )
-                ], width=6),
-                dbc.Col([
-                    html.Label("Payoff"),
-                    dcc.Graph(id="payoff")
-                ], width=6)
-            ]),
-            
-            html.Br(),
-            
-            # Fifth row of content
-            dbc.Row([
-                dbc.Col([
+                    ),
+                    
                     html.Label("Legs Details"),
                     dbc.Table(
                         id="legs-details",
@@ -181,21 +163,28 @@ app.layout = dbc.Container([
                             html.Tbody([
                                 html.Tr([html.Td("Leg 1"), html.Td("ATMVol 1"), html.Td("PV 1")]),
                                 html.Tr([html.Td("Leg 2"), html.Td("ATMVol 2"), html.Td("PV 2")]),
-                                html.Tr([html.Td("Leg 3"), html.Td("ATMVol 3"), html.Td("PV 3")])
+                                html.Tr([html.Td("Leg 3"), html.Td("ATMVol 3"), html.Td("PV 3")]),
+                                html.Tr([html.Td("Leg 4"), html.Td("ATMVol 4"), html.Td("PV 4")]),
                             ])
                         ],
                         style={'width': '100%'}
                     )
-                ], width=6),
+                ], width=3),
                 dbc.Col([
-                    html.Label("Historic PnL"),
-                    dcc.Graph(id="historic-pnl"),
-                    html.Button('Generate Chart', id='generate-chart-btn', n_clicks=0)
-                ], width=6)
+                    html.Label("Payoff"),
+                    dcc.Graph(id="payoff", className="w-100"),
+                ], width=9)
+            ], className="mb-4"),
+            
+            # Fifth row of content
+                dbc.Col([
+                    html.Button('Generate Historic PnL', id='generate-chart-btn', n_clicks=0, className="btn btn-primary mt-3"),
+                    html.Label("  Historic PnL"),
+                    dcc.Graph(id="historic-pnl", className="w-100")
+                ], width=9)
             ])
-        ])
+        ], className="p-4")
     ])
-])
 
 # Define a function to get the plotly figure for the payoff chart
 def get_structure_payoff_dummy(currency, structure, exp_tenor, p_or_r, long_short, pmt_freq, fp_spot, first_strike, width):
@@ -212,16 +201,92 @@ def get_structure_payoff_dummy(currency, structure, exp_tenor, p_or_r, long_shor
 
     # Create a DataFrame with selected features
     data = {
-        'Feature 1': features[:, feature1],
-        'Feature 2': features[:, feature2],
+        'Rate Level': features[:, feature1],
+        'Payoff': features[:, feature2],
         'Species': labels
     }
     df = pd.DataFrame(data)
 
     # Create scatter plot
-    fig = px.scatter(df, x='Feature 1', y='Feature 2', color='Species', title='Dummy Payoff Chart')
+    fig = px.scatter(df, x='Rate Level', y='Payoff', color='Species', title='Structure Payoff')
+    fig.update_layout(template='plotly_dark')
 
     return fig
+
+
+# Define a function to get the plotly figure for the historic pnl
+def get_historic_pnl_dummy(currency, structure, exp_tenor, p_or_r, long_short, pmt_freq, fp_spot, first_strike, width):
+    # Load the Iris dataset
+    iris = load_iris()
+    features = iris.data
+
+    # Create a DataFrame with the features
+    feature = str(random.randint(1, 4))
+    colname=f"Feature {feature}"
+    df = pd.DataFrame(features, columns=['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4'])
+
+
+    # Create a line chart using Plotly
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df.index, y=df[colname], mode='lines', name='Feature 1'))
+
+    # Update layout
+    fig.update_layout(title='Historic PnL Dummy Chart', xaxis_title='Index', yaxis_title='Values')
+    fig.update_layout(template='plotly_dark')
+
+    return fig
+
+
+
+# Define callback to update the input box value based on the slider value
+@app.callback(
+    Output('1st-strike', 'value'),
+    [Input('slider1', 'value')]
+)
+def update_input_from_slider(slider_value):
+    return slider_value
+
+# Define callback to update the slider value based on the input box value
+@app.callback(
+    Output('slider1', 'value'),
+    [Input('1st-strike', 'value')]
+)
+def update_slider_from_input(input_value):
+    return input_value
+
+# Define callback to update the slider marks based on the input box value
+@app.callback(
+    Output('slider1', 'marks'),
+    [Input('1st-strike', 'value')]
+)
+def update_slider_marks(input_value):
+    marks1={i: str(i) if i % 0.1 == 0 else '' for i in range(11)},
+    return marks1
+
+# Define callback to update the input box value based on the slider value
+@app.callback(
+    Output('width', 'value'),
+    [Input('slider2', 'value')]
+)
+def update_input_from_slider(slider_value):
+    return slider_value
+
+# Define callback to update the slider value based on the input box value
+@app.callback(
+    Output('slider2', 'value'),
+    [Input('width', 'value')]
+)
+def update_slider_from_input(input_value):
+    return input_value
+
+# Define callback to update the slider marks based on the input box value
+@app.callback(
+    Output('slider2', 'marks'),
+    [Input('width', 'value')]
+)
+def update_slider_marks(input_value):
+    marks = {i/10: str(i/10) if i % 1 == 0 else '' for i in range(21)}
+    return marks
 
 # Define callback to update the payoff chart
 @app.callback(
@@ -261,7 +326,7 @@ def update_payoff_chart(currency, structure, exp_tenor, p_or_r, long_short, pmt_
 def update_historic_pnl_chart(n_clicks, currency, structure, exp_tenor, p_or_r, long_short, pmt_freq, fp_spot, first_strike, width):
     if n_clicks > 0 and all([currency, structure, exp_tenor, p_or_r, long_short, pmt_freq, fp_spot, first_strike, width]):
         # Call the function to get the historic pnl chart figure
-        return get_structure_payoff_dummy(currency, structure, exp_tenor, p_or_r, long_short, pmt_freq, fp_spot, first_strike, width)
+        return get_historic_pnl_dummy(currency, structure, exp_tenor, p_or_r, long_short, pmt_freq, fp_spot, first_strike, width)
     else:
         # If any input is missing or button is not clicked, return an empty figure
         return go.Figure()
@@ -269,4 +334,3 @@ def update_historic_pnl_chart(n_clicks, currency, structure, exp_tenor, p_or_r, 
 # Run the app
 if __name__ == '__main__':
     app.run_server(debug=True, port=8051)
-
