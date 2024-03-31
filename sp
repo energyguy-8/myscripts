@@ -177,14 +177,32 @@ app.layout = dbc.Container([
             ], className="mb-4"),
             
             # Fifth row of content
+            dbc.Row([
+                dbc.Col([
+                    html.Label("Carry"),
+                    dbc.Table(
+                            id="carry_table",
+                            children=[
+                                html.Thead(html.Tr([html.Th("Metric"), html.Th("Value")])),
+                                html.Tbody([
+                                    html.Tr([html.Td("Carry"), html.Td("carry")]),
+                                    html.Tr([html.Td("Theta"), html.Td("theta")]),
+                                    html.Tr([html.Td("Vol Roll"), html.Td("vol_roll")]),
+                                    html.Tr([html.Td("Fwd Roll"), html.Td("fwd_roll")])
+                                ])
+                            ],
+                        style={'width': '100%'}
+                    ),
+                ]),
                 dbc.Col([
                     html.Button('Generate Historic PnL', id='generate-chart-btn', n_clicks=0, className="btn btn-primary mt-3"),
-                    html.Label("  Historic PnL"),
+#                     html.Label("  Historic PnL"),
                     dcc.Graph(id="historic-pnl", className="w-100")
                 ], width=9)
             ])
         ], className="p-4")
     ])
+])
 
 # Define a function to get the plotly figure for the payoff chart
 def get_structure_payoff_dummy(currency, structure, exp_tenor, p_or_r, long_short, pmt_freq, fp_spot, first_strike, width):
@@ -231,7 +249,7 @@ def get_historic_pnl_dummy(currency, structure, exp_tenor, p_or_r, long_short, p
     fig.add_trace(go.Scatter(x=df.index, y=df[colname], mode='lines', name='Feature 1'))
 
     # Update layout
-    fig.update_layout(title='Historic PnL Dummy Chart', xaxis_title='Index', yaxis_title='Values')
+    fig.update_layout(title='Historic PnL Dummy Chart', xaxis_title='Time', yaxis_title='PV')
     fig.update_layout(template='plotly_dark')
 
     return fig
@@ -260,7 +278,7 @@ def update_slider_from_input(input_value):
     [Input('1st-strike', 'value')]
 )
 def update_slider_marks(input_value):
-    marks1={i: str(i) if i % 0.1 == 0 else '' for i in range(11)},
+    marks1={i: str(i) if i % 0.1 == 0 else '' for i in range(11)}
     return marks1
 
 # Define callback to update the input box value based on the slider value
