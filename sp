@@ -1,3 +1,5 @@
+# !pip install dash_bootstrap_components
+
 import dash
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
@@ -30,38 +32,59 @@ app.layout = dbc.Container([
                     dcc.Dropdown(
                         id="currency_id",
                         options=[
+                            {'label': 'GBP', 'value': 'GBP'},
+                            {'label': 'EUR', 'value': 'EUR'},
                             {'label': 'USD', 'value': 'USD'},
-                            {'label': 'EUR', 'value': 'EUR'}
                         ],
-                        value='USD'
+                        value='GBP'
                     )
+                ]),
+                dbc.Col([
+                    html.Label("Exp - Tenor"),
+                    dcc.Input(id="exp_tenor_id", type="text", debounce=True, value='1y1y')
                 ]),
                 dbc.Col([
                     html.Label("Structure"),
                     dcc.Dropdown(
                         id="structure_id",
                         options=[
-                            {'label': 'Option 1', 'value': 'opt1'},
-                            {'label': 'Option 2', 'value': 'opt2'}
+                            {'label': 'Payer', 'value': 'payer'},
+                            {'label': 'Receiver ', 'value': 'receiver'},
+                            {'label': 'Payer Spread', 'value': 'p_spread'},
+                            {'label': 'Receiver Spread', 'value': 'r_spread'},
+                            {'label': 'Payer fly', 'value': 'p_fly'},
+                            {'label': 'Receiver fly', 'value': 'r_fly'},
+                            {'label': 'Payer Condor', 'value': 'p_condor'},
+                            {'label': 'Receiver Condor', 'value': 'r_condor'},
                         ],
-                        value='opt1'
+                        value='payer'
                     )
                 ]),
-                dbc.Col([
-                    html.Label("Exp - Tenor"),
-                    dcc.Input(id="exp_tenor_id", type="text", value='1')
-                ]),
+                
                 dbc.Col([
                     html.Label("Payer or Receiver"),
                     dcc.Dropdown(
                         id="p_r_id",
                         options=[
-                            {'label': 'Option A', 'value': 'optA'},
-                            {'label': 'Option B', 'value': 'optB'}
+                            {'label': 'Payer', 'value': 'payer'},
+                            {'label': 'Receiver', 'value': 'receiver'}
                         ],
-                        value='optA'
+                        value='payer'
                     )
                 ]),
+                
+                dbc.Col([
+                    html.Label("CapFloor or Swaption"),
+                    dcc.Dropdown(
+                        id="capfloor_swaption_id",
+                        options=[
+                            {'label': 'Cap/Floor', 'value': 'cap_floor'},
+                            {'label': 'Swaption', 'value': 'swaption'}
+                        ],
+                        value='swaption'
+                    )
+                ]),
+                
                 dbc.Col([
                     html.Label("Long/Short"),
                     dcc.Dropdown(
@@ -101,7 +124,7 @@ app.layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     html.Label("1st Strike"),
-                    dcc.Input(id="1st_strike_id", type="number", value=3, step=0.05, debounce=True, className="form-control")
+                    dcc.Input(id="1st_strike_id", type="number", value=3, debounce=True, className="form-control")
                 ], width=3),
                 dbc.Col([
                     html.Label("1st Strike"),
@@ -109,9 +132,10 @@ app.layout = dbc.Container([
                         id='1st_strike_slider_id',
                         min=0,
                         max=10,
-                        step=0.1,
-                        value=5,
-                        marks={i: str(i) if i % 1 == 0 else '' for i in range(11)},
+                        step=0.25,
+                        value=3,
+                        marks={i: f"{i}%" if i % 1 == 0 else '' for i in range(11)},
+                        tooltip={"placement": "bottom", "always_visible": True},
                         className="w-100"
                     )
                 ], width=9)
@@ -121,7 +145,7 @@ app.layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     html.Label("Width"),
-                    dcc.Input(id="width_id", type="number", value=1, step=0.05, debounce=True, className="form-control")
+                    dcc.Input(id="width_id", type="number", value=1, debounce=True, className="form-control")
                 ], width=3),
                 dbc.Col([
                     html.Label("Width"),
@@ -131,7 +155,8 @@ app.layout = dbc.Container([
                         max=2,
                         step=0.05,
                         value=0.5,
-                        marks={i: str(i) if i % 0.1 == 0 else '' for i in range(11)},
+                        marks={i: f"{i}%" for i in range(21)},
+                        tooltip={"placement": "bottom", "always_visible": True},
                         className="w-100"
                     )
                 ], width=9)
@@ -203,7 +228,9 @@ app.layout = dbc.Container([
             ])
         ], className="p-4")
     ])
-])
+], style={"max-width": "1920px"})
+
+
 
 # Define a function to get the plotly figure for the payoff chart
 def get_structure_payoff_dummy(currency, structure, exp_tenor, p_or_r, long_short, pmt_freq, fp_spot, first_strike, width):
@@ -263,6 +290,19 @@ def mult(value):
 
 
 
+# Define a callback so that Payer or Receiver is payer or receiver if structure is outright
+@app.callback(
+    Output('p_r_id', 'value'),
+    [Input('structure_id', 'value')]
+)
+def p_or_r(structure):
+    if structure=='payer':
+        return 'payer'
+    elif structure=='receiver':
+        return 'receiver'
+
+
+
 # Define callback to update the input box value based on the slider value
 @app.callback(
     Output('1st_strike_id', 'value'),
@@ -278,15 +318,6 @@ def update_input_from_slider(slider_value):
 )
 def update_slider_from_input(input_value):
     return input_value
-
-# Define callback to update the slider marks based on the input box value
-@app.callback(
-    Output('1st_strike_slider_id', 'marks'),
-    [Input('1st_strike_id', 'value')]
-)
-def update_slider_marks(input_value):
-    marks1={i: str(i) if i % 0.1 == 0 else '' for i in range(11)}
-    return marks1
 
 # Define callback to update the input box value based on the slider value
 @app.callback(
@@ -304,14 +335,6 @@ def update_input_from_slider(slider_value):
 def update_slider_from_input(input_value):
     return input_value
 
-# Define callback to update the slider marks based on the input box value
-@app.callback(
-    Output('width_slider_id', 'marks'),
-    [Input('width_id', 'value')]
-)
-def update_slider_marks(input_value):
-    marks = {i/10: str(i/10) if i % 1 == 0 else '' for i in range(21)}
-    return marks
 
 # Define callback to update the payoff chart
 @app.callback(
