@@ -1,0 +1,97 @@
+import dash
+from dash import dcc, html, Input, Output
+import dash_ag_grid as dag
+import pandas as pd
+import numpy as np
+
+
+# Dummy vol_analysis function
+def vol_analysis(countries):
+    result = {}
+    for country in countries:
+        expiries = ['1Y', '2Y', '5Y']
+        tenors = ['5Y', '10Y', '30Y']
+
+        vol_change = pd.DataFrame(
+            np.random.randn(len(expiries), len(tenors)),
+            index=expiries,
+            columns=tenors
+        )
+
+        fwd_change = pd.DataFrame(
+            np.random.randn(len(expiries), len(tenors)),
+            index=expiries,
+            columns=tenors
+        )
+
+        result[country] = (vol_change, fwd_change)
+
+    return result
+
+
+# Initialize Dash app
+app = dash.Dash(__name__)
+
+countries = ['USA', 'UK', 'Germany']
+
+# Function to create country section with AgGrid
+def create_country_section(country, vol_df, fwd_df):
+    return html.Div([
+        html.H2(country),
+
+        html.Div([
+            html.Div([
+                html.H4('Vol Change'),
+                dag.AgGrid(
+                    rowData=vol_df.reset_index().rename(columns={'index': 'Expiry'}).to_dict('records'),
+                    columnDefs=[{'field': col} for col in ['Expiry'] + vol_df.columns.tolist()],
+                    className="ag-theme-alpine-dark",
+                    style={'height': 200, 'width': '100%'},
+                )
+            ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+
+            html.Div([
+                html.H4('Forward Change'),
+                dag.AgGrid(
+                    rowData=fwd_df.reset_index().rename(columns={'index': 'Expiry'}).to_dict('records'),
+                    columnDefs=[{'field': col} for col in ['Expiry'] + fwd_df.columns.tolist()],
+                    className="ag-theme-alpine-dark",
+                    style={'height': 200, 'width': '100%'},
+                )
+            ], style={'width': '48%', 'display': 'inline-block', 'marginLeft': '4%', 'verticalAlign': 'top'}),
+        ]),
+
+        html.Hr()
+    ])
+
+
+# Layout with refresh button
+app.layout = html.Div([
+    html.H1('Vol & Forward Change Viewer'),
+
+    # Button to refresh the data
+    html.Button("Refresh Data", id="refresh-button", n_clicks=0),
+
+    # Div to display the generated tables
+    html.Div(id="country-sections"),
+])
+
+
+# Callback to update the data and the country sections when the button is clicked
+@app.callback(
+    Output("country-sections", "children"),
+    Input("refresh-button", "n_clicks")
+)
+def update_data(n_clicks):
+    # Regenerate the vol_analysis data on button click
+    data = vol_analysis(countries)
+
+    # Return the updated country sections
+    return [
+        create_country_section(country, *data[country])
+        for country in countries
+    ]
+
+
+if __name__ == '__main__':
+    app.run_server(debug=True, port=8051)
