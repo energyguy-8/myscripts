@@ -8,7 +8,7 @@ import numpy as np
 # Dummy vol_analysis function
 def vol_analysis(countries):
     result = {}
-    for country in countries:
+    for country in countries: 
         expiries = ['1Y', '2Y', '5Y']
         tenors = ['5Y', '10Y', '30Y']
 
